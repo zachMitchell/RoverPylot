@@ -3,6 +3,8 @@ RoverPylot
 
 Pilot the Brookstone Rover 2.0 and Rover Revolution from Python
 
+<i>I Broke the functionality of doing a global install in this fork. This works when locally launching it though</i>
+
 <h2>Instructions</h2>
 
 This repository contains a Python API and demo
@@ -13,6 +15,7 @@ href="http://www.amazon.com/Rover-Revolution-App-Controlled-Wireless-Vehicle/dp/
 Revolution</a> spy vehicle from your laptop or PC. To get started, you should
 get hold of a 
 Rover 2.0 or Revolution (of course) and a Playstation PS3 controller or clone, and install the repository
+<b>(Zach) xbox360 support is now available as well</b>
 (<b>sudo python setup.py install</b> for Linux users), as well as
 <a href="http://pygame.org/news.html">PyGame</a> and either <a href="http://opencv.org/">OpenCV</a> for Python
 (Rover 2.0) or <a href="https://www.ffmpeg.org/">ffmpeg</a> (Rover Revolution). 

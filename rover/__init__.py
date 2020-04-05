@@ -20,9 +20,9 @@ import threading
 import socket
 import time
 
-from blowfish import Blowfish
-from adpcm import decodeADPCMToPCM
-from byteutils import *
+from rover.blowfish import Blowfish
+from rover.adpcm import decodeADPCMToPCM
+from rover.byteutils import *
     
 class Rover:
 
@@ -174,7 +174,7 @@ class Rover:
     def _sendCameraRequest(self, request):
         self._sendCommandByteRequest(14, [request]) 
          
-           
+
 class Rover20(Rover):
 
     def __init__(self):

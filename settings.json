@@ -1,0 +1,23 @@
+{
+    "controllers":{
+        "xbox360":{
+            "lights":1,
+            "stealth":2,
+            "camera_up":3,
+            "camera_down":0,
+            "wheel_l":1,
+            "wheel_r":4
+        },
+        "ps3":{
+            "lights":3,
+            "stealth":1,
+            "camera_up":0,
+            "camera_down":2,
+            "wheel_l":1,
+            "wheel_r":3
+        }
+    },
+    "default_controller":"xbox360",
+    "audio":false,
+    "video_out":"/tmp/tmpRover.jpg"
+}

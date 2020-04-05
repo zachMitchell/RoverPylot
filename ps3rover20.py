@@ -17,18 +17,18 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 '''
 
-# You may want to adjust these buttons for your own controller
-BUTTON_LIGHTS      = 3  # Square button toggles lights
-BUTTON_STEALTH     = 1  # Circle button toggles stealth mode
-BUTTON_CAMERA_UP   = 0  # Triangle button raises camera
-BUTTON_CAMERA_DOWN = 2  # X button lowers camera
-
 # Avoid button bounce by enforcing lag between button events
-MIN_BUTTON_LAG_SEC = 0.5
+MIN_BUTTON_LAG_SEC = 0.0
 
 # Avoid close-to-zero values on axis
-MIN_AXIS_ABSVAL    = 0.01
+MIN_AXIS_ABSVAL    = 0.4
 
+dpadMoveList = {
+    "(0, 1)":[1,1], # Forward
+    "(0, -1)":[-1,-1],# Backward
+    "(-1, 0)":[-1,1], # Left
+    "(1, 0)":[1,-1] # Right
+}
 
 from rover import Rover20
 
@@ -37,6 +37,10 @@ import time
 import pygame
 import sys
 import signal
+import json
+
+SETTINGS = json.load(open('settings.json'))
+CONTROLLER = SETTINGS['controllers'][SETTINGS['default_controller']]
                                    
 # Supports CTRL-C to override threads
 def _signal_handler(signal, frame):
@@ -80,13 +84,13 @@ class PS3Rover(Rover20):
                 pass
         except:
             pass
-
-        self.pcmfile = open('rover20.pcm', 'w')
+        if SETTINGS['audio']:
+            self.pcmfile = open('rover20.pcm', 'w')
 
     # Automagically called by Rover class
     def processAudio(self, pcmsamples, timestamp_10msec):
-
-        for samp in pcmsamples:
+        #for samp in pcmsamples:
+        if SETTINGS['audio']:
             self.pcmfile.write('%d\n' % samp)
 
     # Automagically called by Rover class
@@ -96,27 +100,34 @@ class PS3Rover(Rover20):
         pygame.event.pump()    
 
         # Toggle lights    
-        self.lightsAreOn  = self.checkButton(self.lightsAreOn, BUTTON_LIGHTS, self.turnLightsOn, self.turnLightsOff)   
+        self.lightsAreOn  = self.checkButton(self.lightsAreOn, CONTROLLER['lights'], self.turnLightsOn, self.turnLightsOff)   
             
         # Toggle night vision (infrared camera)    
-        self.stealthIsOn = self.checkButton(self.stealthIsOn, BUTTON_STEALTH, self.turnStealthOn, self.turnStealthOff)   
+        self.stealthIsOn = self.checkButton(self.stealthIsOn, CONTROLLER['stealth'], self.turnStealthOn, self.turnStealthOff)   
         # Move camera up/down    
-        if self.controller.get_button(BUTTON_CAMERA_UP):  
+        if self.controller.get_button(CONTROLLER['camera_up']):
             self.moveCameraVertical(1)
-        elif self.controller.get_button(BUTTON_CAMERA_DOWN): 
+        elif self.controller.get_button(CONTROLLER['camera_down']):
             self.moveCameraVertical(-1)
         else:
             self.moveCameraVertical(0)
-            
-        # Set treads based on axes        
-        self.setTreads(self.axis(1), self.axis(3))
+
+        self.dpadPressed = False
+        # Set treads based on hat (D-Pad)
+        dpad = self.checkHat()
+        if dpad:
+            self.dpadTreadsMove(str(dpad))
+            self.dpadPressed = True
+        if not self.dpadPressed:
+            # Set treads based on axes
+            self.setTreads(self.axis(CONTROLLER['wheel_l']), self.axis(CONTROLLER['wheel_r']) )
 
         # Display video image if possible
         try:
             if cv:
 
                 # Save image to file on disk and load as OpenCV image
-                fname = 'tmp.jpg'
+                fname = SETTINGS['video_out']
                 fd = open(fname, 'w')
                 fd.write(jpegbytes)
                 fd.close()
@@ -138,12 +149,11 @@ class PS3Rover(Rover20):
         value = -self.controller.get_axis(index)
         
         if value > MIN_AXIS_ABSVAL:
-            return 1
+            return value
         elif value < -MIN_AXIS_ABSVAL:
-            return -1
+            return value
         else:
             return 0
-
 
     # Handles button bounce by waiting a specified time between button presses   
     def checkButton(self, flag, buttonID, onRoutine=None, offRoutine=None):
@@ -159,7 +169,17 @@ class PS3Rover(Rover20):
                         onRoutine()
                     flag = True
         return flag
-        
+
+    def checkHat(self):
+        result = self.controller.get_hat(0)
+        if (result[0] or result[1]) and (time.time() - self.lastButtonTime) > MIN_BUTTON_LAG_SEC:
+            self.lastButtonTime = time.time()
+            return result
+
+    def dpadTreadsMove(self,key):
+        if(dpadMoveList.get(key)):
+            self.setTreads(dpadMoveList[key][0],dpadMoveList[key][1])
+
 # main -----------------------------------------------------------------------------------
 
 if __name__ == '__main__':
